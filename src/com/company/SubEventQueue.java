@@ -857,16 +857,43 @@ public class SubEventQueue<E> extends AbstractQueue<E>
         }
     }
 
-    public boolean find(E e) {
-        for (int i = 0; i < size; i++) {
-            E obj = (E) queue[i];
-            if (e == obj) {
-                return true;
+    public boolean find(IFilter<E> iFilter) {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            Object[] array = queue;
+            for (int i = 0, n = size; i < n; i++) {
+                E obj = (E) array[i];
+                if (iFilter.match(obj)) {
+                    return true;
+                }
             }
+        } finally {
+            lock.unlock();
         }
         return false;
     }
 
+    public void remove(IFilter<E> iFilter) {
+        final ReentrantLock lock = this.lock;
+        lock.lock();
+        try {
+            Object[] array = queue;
+            for (int i = 0, n = size; i < n; i++) {
+                E obj = (E) array[i];
+                if (iFilter.match(obj)) {
+                    removeAt(i);
+                }
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
     // Unsafe mechanics
     private static AtomicInteger atomicInteger = new AtomicInteger(0);
+
+    public interface IFilter<E> {
+        boolean match(E obj);
+    }
 }

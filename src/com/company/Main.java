@@ -19,8 +19,16 @@ public class Main {
         }
     }
 
+    private static final boolean f(){
+        try {
+            return false;
+        }finally {
+            System.out.println("finally");
+        }
+    }
+
     public static void main(String[] args) throws IOException {
 	// write your code here
-        Unsafe unsafe = Unsafe.getUnsafe();
+        System.out.println(f());
     }
 }
