@@ -901,6 +901,9 @@ public class SubQueue<E> extends AbstractQueue<E>
             }
             while (!siftUpStack.isEmpty()) {
                 int upIdx = siftUpStack.pop();
+                if (upIdx >= size) {
+                    break;
+                }
                 Comparator<? super E> cmp = comparator;
                 E moved = (E) array[upIdx];
                 if (cmp == null) {
