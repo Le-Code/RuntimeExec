@@ -1,14 +1,6 @@
 package com.company;
 
-import java.util.AbstractQueue;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.PriorityQueue;
-import java.util.Queue;
-import java.util.SortedSet;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -16,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class SubEventQueue<E> extends AbstractQueue<E>
+public class SubQueue<E> extends AbstractQueue<E>
         implements BlockingQueue<E>, java.io.Serializable {
     private static final long serialVersionUID = 5595510919245408276L;
 
@@ -97,7 +89,7 @@ public class SubEventQueue<E> extends AbstractQueue<E>
      * initial capacity (11) that orders its elements according to
      * their {@linkplain Comparable natural ordering}.
      */
-    public SubEventQueue() {
+    public SubQueue() {
         this(DEFAULT_INITIAL_CAPACITY, null);
     }
 
@@ -110,7 +102,7 @@ public class SubEventQueue<E> extends AbstractQueue<E>
      * @throws IllegalArgumentException if {@code initialCapacity} is less
      *         than 1
      */
-    public SubEventQueue(int initialCapacity) {
+    public SubQueue(int initialCapacity) {
         this(initialCapacity, null);
     }
 
@@ -126,8 +118,8 @@ public class SubEventQueue<E> extends AbstractQueue<E>
      * @throws IllegalArgumentException if {@code initialCapacity} is less
      *         than 1
      */
-    public SubEventQueue(int initialCapacity,
-                                 Comparator<? super E> comparator) {
+    public SubQueue(int initialCapacity,
+                    Comparator<? super E> comparator) {
         if (initialCapacity < 1)
             throw new IllegalArgumentException();
         this.lock = new ReentrantLock();
@@ -152,7 +144,7 @@ public class SubEventQueue<E> extends AbstractQueue<E>
      * @throws NullPointerException if the specified collection or any
      *         of its elements are null
      */
-    public SubEventQueue(Collection<? extends E> c) {
+    public SubQueue(Collection<? extends E> c) {
         this.lock = new ReentrantLock();
         this.notEmpty = lock.newCondition();
         boolean heapify = true; // true if not known to be in heap order
@@ -879,10 +871,42 @@ public class SubEventQueue<E> extends AbstractQueue<E>
         lock.lock();
         try {
             Object[] array = queue;
+            Stack<Integer> siftDownStack = new Stack<>();
+            Stack<Integer> siftUpStack = new Stack<>();
             for (int i = 0, n = size; i < n; i++) {
                 E obj = (E) array[i];
                 if (iFilter.match(obj)) {
-                    removeAt(i);
+                    siftDownStack.push(i);
+                }
+            }
+            while (!siftDownStack.isEmpty()) {
+                int removeIdx = siftDownStack.pop();
+                int n = size - 1;
+                if (n == removeIdx) {
+                    array[removeIdx] = null;
+                }else {
+                    E moved = (E) array[n];
+                    array[n] = null;
+                    Comparator<? super E> cmp = comparator;
+                    if (cmp == null) {
+                        siftDownComparable(removeIdx, moved, array, n);
+                    }else {
+                        siftDownUsingComparator(removeIdx, moved, array, n, cmp);
+                    }
+                    if (array[removeIdx] == moved) {
+                        siftUpStack.push(removeIdx);
+                    }
+                }
+                size = n;
+            }
+            while (!siftUpStack.isEmpty()) {
+                int upIdx = siftUpStack.pop();
+                Comparator<? super E> cmp = comparator;
+                E moved = (E) array[upIdx];
+                if (cmp == null) {
+                    siftUpComparable(upIdx, moved, array);
+                }else {
+                    siftUpUsingComparator(upIdx, moved, array, cmp);
                 }
             }
         } finally {
