@@ -37,60 +37,27 @@ public class Main {
     private static void testFindPerformance() {
         long subQueueTime = 0;
         long priQueueTime = 0;
-        SubQueue<Integer> subQueue = new SubQueue<>();
-        PriorityBlockingQueue<Integer> priorityBlockingQueue = new PriorityBlockingQueue<>();
-        Random random = new Random();
-        for (int i = 0; i < 10000; i++) {
-            subQueue.clear();
-            priorityBlockingQueue.clear();
-            for (int j = 0; j < 1000; j++) {
-                int id = random.nextInt(1000);
-                subQueue.add(id);
-                priorityBlockingQueue.add(id);
-            }
-            int removeId = random.nextInt(100);
-            long st = System.nanoTime();
-            subQueue.remove(new SubQueue.IFilter<Integer>() {
-                @Override
-                public boolean match(Integer obj) {
-                    return obj == removeId;
-                }
-            });
-            subQueueTime += (System.nanoTime() - st);
-
-            long st2 = System.nanoTime();
-            priorityBlockingQueue.contains(removeId);
-            priQueueTime += (System.nanoTime() - st2);
-        }
-
-        System.out.println("subQueue remove item consume time : " + subQueueTime * 1.0 / 10000);
-        System.out.println("PriorityBlockingQueue remove item consume time : " + priQueueTime * 1.0 / 10000);
-    }
-
-    private static void testFindPerformance2() {
-        long subQueueTime = 0;
-        long priQueueTime = 0;
         SubQueue<Event> subQueue = new SubQueue<>();
         PriorityBlockingQueue<Event> priorityBlockingQueue = new PriorityBlockingQueue<>();
         Random random = new Random();
         for (int i = 0; i < 10000; i++) {
             subQueue.clear();
             priorityBlockingQueue.clear();
-            for (int j = 0; j < 100; j++) {
+            for (int j = 0; j < 10000; j++) {
                 subQueue.add(new Event(j, "value" + j));
                 priorityBlockingQueue.add(new Event(j, "value" + j));
             }
-            int removeId = random.nextInt(100);
+            int findId = random.nextInt(10000);
             long st = System.nanoTime();
             subQueue.find(new SubQueue.IFilter<Event>() {
                 @Override
                 public boolean match(Event obj) {
-                    return obj.id == removeId;
+                    return obj.id == findId;
                 }
             });
             subQueueTime += (System.nanoTime() - st);
 
-            priQueueTime += priFind(priorityBlockingQueue, removeId);
+            priQueueTime += priFind(priorityBlockingQueue, findId);
         }
 
         System.out.println("subQueue remove item consume time : " + subQueueTime * 1.0 / 10000);
@@ -113,23 +80,24 @@ public class Main {
     private static void testRemovePerformance() {
         long subQueueTime = 0;
         long priQueueTime = 0;
-        SubQueue<Integer> subQueue = new SubQueue<>();
-        PriorityBlockingQueue<Integer> priorityBlockingQueue = new PriorityBlockingQueue<>();
+        final int times = 1000;
+        SubQueue<Event> subQueue = new SubQueue<>();
+        PriorityBlockingQueue<Event> priorityBlockingQueue = new PriorityBlockingQueue<>();
         Random random = new Random();
         for (int i = 0; i < 10000; i++) {
             subQueue.clear();
             priorityBlockingQueue.clear();
-            for (int j = 0; j < 1000; j++) {
-                int id = random.nextInt(1000);
-                subQueue.add(id);
-                priorityBlockingQueue.add(id);
+            for (int j = 0; j < times; j++) {
+                int id = random.nextInt(times);
+                subQueue.add(new Event(id, "value" + id));
+                priorityBlockingQueue.add(new Event(id, "value" + j));
             }
-            int removeId = random.nextInt(100);
+            int removeId = random.nextInt(times);
             long st = System.nanoTime();
-            subQueue.remove(new SubQueue.IFilter<Integer>() {
+            subQueue.remove(new SubQueue.IFilter<Event>() {
                 @Override
-                public boolean match(Integer obj) {
-                    return obj == removeId;
+                public boolean match(Event obj) {
+                    return obj.id == removeId;
                 }
             });
             subQueueTime += (System.nanoTime() - st);
@@ -141,12 +109,12 @@ public class Main {
         System.out.println("PriorityBlockingQueue remove item consume time : " + priQueueTime * 1.0 / 10000);
     }
 
-    private static long priRemove(PriorityBlockingQueue<Integer> queue, int key) {
+    private static long priRemove(PriorityBlockingQueue<Event> queue, int key) {
         long st = System.nanoTime();
-        Iterator<Integer> iterator = queue.iterator();
+        Iterator<Event> iterator = queue.iterator();
         while (iterator.hasNext()) {
-            Integer item = iterator.next();
-            if (item == key) {
+            Event item = iterator.next();
+            if (item.id == key) {
                 iterator.remove();
             }
         }
@@ -206,7 +174,7 @@ public class Main {
         }*/
 
         // compare performance
-//        testRemovePerformance();
-        testFindPerformance2();
+        testRemovePerformance();
+//        testFindPerformance();
     }
 }
